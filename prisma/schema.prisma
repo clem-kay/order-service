@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+
+  @@map("Role")
+}
+
+model UserProfile {
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  firstname  String
+  middlename String?
+  lastname   String
+  number     String?
+  email      String?      @unique
+  accountId  Int?         @unique
+  account    UserAccount? @relation(fields: [accountId], references: [id])
+
+  @@map("UserProfile")
+}
+
+model UserAccount {
+  id              Int                  @id @default(autoincrement())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  username        String               @unique
+  password        String?
+  hashedRT        String?
+  user            UserProfile?
+  role            String
+  isActive        Boolean              @default(true)
+  menus           FoodMenu[]
+  statusHistories OrderStatusHistory[]
+
+  @@map("UserAccount")
+}
+
+model FoodMenu {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  name          String
+  price         Float
+  imageUrl      String?
+  description   String
+  quantity      Int?         @default(1)
+  userAccountId Int // Foreign key referencing UserAccount
+  userAccount   UserAccount  @relation(fields: [userAccountId], references: [id])
+  OrderItem     OrderItem[]
+  categoryId    Int
+  category      FoodCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("FoodMenu")
+}
+
+model Order {
+  id            Int                  @id @default(autoincrement())
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  food_status   String
+  totalAmount   Float
+  name          String
+  number        String
+  location      String
+  other_info    String
+  pickup_status String
+  orderItems    OrderItem[]
+  statusHistory OrderStatusHistory[] // Relation to OrderStatusHistory
+  comment       String?
+  paid          Boolean              @default(false)
+  email         String?
+
+  @@map("Order")
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  price      Float
+  foodMenuId Int
+  foodMenu   FoodMenu @relation(fields: [foodMenuId], references: [id], onDelete: Cascade)
+  orderId    Int
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("OrderItem")
+}
+
+model OrderStatusHistory {
+  id            Int          @id @default(autoincrement())
+  orderId       Int
+  order         Order        @relation(fields: [orderId], references: [id])
+  userAccountId Int?
+  userAccount   UserAccount? @relation(fields: [userAccountId], references: [id])
+  status        String
+  createdAt     DateTime     @default(now())
+
+  @@map("OrderStatusHistory")
+}
+
+model Reservation {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  date           DateTime
+  time           String
+  numberOfGuests Int
+  name           String
+  phone          String
+
+  @@map("Reservation")
+}
+
+model FoodCategory {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  name        String
+  description String?
+  FoodMenu    FoodMenu[]
+
+  @@map("FoodCategory")
+}
+
+model OrderSessionId{
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orderId     Int
+  sessionId   String
+}
